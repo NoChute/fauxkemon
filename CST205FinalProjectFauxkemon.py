@@ -7,11 +7,54 @@ import random
 import urllib
 import tempfile
 
+dirThisModule = os.path.dirname(__file__)  #Determine path to this module to simplify other path declarations.
+
+
+def getOS():
+  os = ""
+  ver = sys.platform.lower()
+  ver = java.lang.System.getProperty("os.name").lower()
+  if ver.startswith('mac'):
+    os = "mac"
+  if ver.startswith('win'):
+    os = "win"
+  return os
+
+def getMedia(mediaType, fileName):
+  suffix = ""
+  if mediaType == "img":
+    suffix = ".png"
+  else:
+    suffix = ".wav"
+
+  if getOS() == "win":
+   #windows
+    #tempPath = "C://Windows//Temp//" + fileName + suffix
+    mediaPath = os.path.join(dirThisModule, "media", fileName + suffix)
+  else:
+    #mac/linux
+    #tempPath = tempfile.gettempdir() + fileName + suffix
+    mediaPath = os.path.join(dirThisModule, "media", fileName + suffix)
+       
+  #url = "https://github.com/NoChute/fauxkemon/blob/master/" + fileName + suffix + "?raw=true"
+  #data = urllib.urlretrieve(url, tempPath)
+  #data = urllib.urlretrieve(url, mediaPath)
+     
+  if mediaType == "img":
+    myMedia = makePicture(mediaPath)
+  else:
+    myMedia = makeSound(mediaPath)
+  return myMedia
+
+
 #Sound Files
 introTheme = getMedia(".wav" , "intro")
 viridian = getMedia(".wav" , "ViridiaForest")
 battleSong = getMedia(".wav" , "battle")
-#Text based adventure style video game based on Pokemon
+
+
+#Adventure style video game based on Pokemon
+
 
 def game():
   #open the map for the player
@@ -22,7 +65,10 @@ def game():
   stopPlaying(introTheme)
   play(viridian)
   initUser()
-  
+  #This is a list for the coordinates for the boss encounter
+  boss = [(176, 160), (160, 160), (192, 160)]
+  #This is a list for the coordinates for the lab encounter
+  lab = [(560,992), (576,992), (544,992)]
   #while the game has not been won or lost, run through the whole thing.
   while true:
     x = requestString("Your move?")
@@ -35,9 +81,21 @@ def game():
       show(getMedia("img", "starters"))
     else:
       m.movePlayer(x)
-      images()
-    
-    
+      
+      #if the player is at the boss's door and they move north, this will take them into the boss encounter.
+      if (tuple(m.getPlayerLocation()) in boss) and ("n" in x.lower()):
+        showInformation("I'm glad to see you finally made it! I'm Gym Leader Block. Let's battle!")
+        battle("Gym Leader Block", 40)
+      
+      #if player is at the starting location and moves south, they will go into the lab
+      elif (tuple(m.getPlayerLocation()) in lab) and ("s" in x.lower()):
+        if len(inventory) == 1:
+          doctor1()
+        else:
+          doctor2()
+      else:
+        images()
+
 
 def intro():
   #introduce the player to the game and their goal for it.
@@ -57,8 +115,7 @@ def intro():
   global name
   name  = requestString("What is your name?")
   if name == "":
-    name = "Red Box"
-  
+    name = "Red Circle"
   
   txt = "Well, " + name + " south of you is the lab. Doctor Bloak will be waiting for you. "
   txt += "You may encounter more pokemon during your journey to the gym. The more creatures you "
@@ -67,7 +124,7 @@ def intro():
 
 #These instructions should pop up when the player types help
 def instructions():
-  text = "To move, use the keys \'N, S, E, W\'. You may also use a multile of that by typing \'2N\', etc. "
+  text = "To move, use the keys \'n, s, e, w\'. You may also use a multile of that by typing \'2n\', etc. "
   text += "You are able to hold 5 faux-kemon at a time and cannot trade them out. Battling "
   text += "other pokemon will make you stronger in order to take on the gym leader. You "
   text += "can see what pokemon you have at any time after visiting the doctor by typing \'inventory\'. "
@@ -97,34 +154,21 @@ def doctor1():
   text += "I have been working with my granddad for many years collecting faux-kemon for him to study. "
   text += "Enough of that though. You are here to get your faux-kemon! We have taken good care of it since "
   text += "you left it with us. Here you go!"
-  inventory.append("Voldetort", "Red Baron", "Branch Manager")
+  inventory.extend(["Voldetort", "Red Baron", "Branch Manager"])
   show(getMedia("img", "starters"))
-  text += "You better be off to the forest to meet up with Dr. Block. She will be waiting for you!"
+  text += "You better be off to the forest to meet up with Gym Leader Block. She will be waiting for you!"
   showInformation(text)
-  while true:
-    command = requestString("Where would you like to go?")
-    command = command.lower()
-    if command == "S":
-        doctor2()
-        break
-    elif command == "help":
-      help()
-    elif command == "exit":
-      leave()
-    else: 
-      printNow("Please re-enter a valid command")
-  
-  
+
+
 def doctor2():
   #if the user already has the fauxkemon, they don't need to be at the lab, so no new information is needed.
-  text = "You best be getting along now " + name + " or you will miss Bloak. I hear she is on her way "
-  text += "out of town. You will find her gym at the end of the XXXXXXX forest. There are many trainers "
+  text = "You best be getting along now " + name + " or you will miss Block. I hear she is on her way "
+  text += "out of town. You will find her gym at the end of the Green Forest. There are many trainers "
   text += "looking to hone their skills in the forest. If you battle them, you will become stronger. "
-  text += "The exit to the lab is just to the south. Good luck! "
+  text += "The exit to the lab is just to the south. Good luck!"
   showInformation(text)
- 
- 
- 
+
+
 def battle(eName, eHealth):
   global userHealth
   global fought
@@ -143,7 +187,7 @@ def battle(eName, eHealth):
     showInformation("Round " + str(round) + "!")
 
     # Player rolls for damage & hit/miss
-    userDamage = random.randrange(0, int(userDamageScale))
+    userDamage = random.randrange(1, int(userDamageScale))
     userHit = random.randrange(0,100)
 
     if (userHit > 12):
@@ -191,9 +235,6 @@ def battle(eName, eHealth):
             text += "Hero health: " + str(userHealth)
             showInformation(text)
 
-    #else:
-        # do nothing
-
   # Win
   if (enemyHealth <= 0):
     showInformation("Congratulations, you bested your foe and leave the battle victorious!")
@@ -203,9 +244,8 @@ def battle(eName, eHealth):
   if (userHealth <= 0):
     showInformation("Unable to best your challenger, you retire to your quarters draped in defeat.")
     sys.exit() 
- 
- 
-  
+
+
 def images():
   h = random.randint(0, 30)
   if h < 6:
@@ -238,8 +278,8 @@ def images():
       play(battleSong)
       battlepic = getMedia("img", "mew")
       show(battlepic)
-      showInformation( "A wild Psycat has appeared!")
-      battle("Psycat", 10)
+      showInformation( "A wild Psychat has appeared!")
+      battle("Psychat", 10)
       stopPlaying(battleSong)
       play(viridian)
     if h == 4:
@@ -258,44 +298,6 @@ def images():
       battle("Voldetort", 10)
       stopPlaying(battleSong)
       play(viridian)
-    
-
-
-
-def getOS():
-  os = ""
-  ver = sys.platform.lower()
-  ver = java.lang.System.getProperty("os.name").lower()
-  if ver.startswith('mac'):
-    os = "mac"
-  if ver.startswith('win'):
-    os = "win"
-  return os
-
-def getMedia(mediaType, fileName):
-  suffix = ""
-  if mediaType == "img":
-    suffix = ".png"
-  else:
-    suffix = ".wav"
-
-  if getOS() == "win":
-   #windows
-    tempPath = "C://Windows//Temp//" + fileName + suffix
-  else:
-    #mac/linux
-    tempPath = tempfile.gettempdir() + fileName + suffix
-       
-  url = "https://github.com/NoChute/fauxkemon/blob/master/" + fileName + suffix + "?raw=true"
-  data = urllib.urlretrieve(url, tempPath)
-     
-  if mediaType == "img":
-    myMedia = makePicture(tempPath)
-  else:
-    myMedia = makeSound(tempPath) 
-  return myMedia
-
-   
 
 
 class Map():
@@ -330,9 +332,9 @@ class Map():
   
   def getPlayerLocation(self):
     return self.playerLocation
+    
   
-  
-  def displayCurrentMap(self, initializing):
+  def displayCurrentMap(self, initializing=False):
     mapFound = False
     for m in self.maps:
       if m[1] <= self.playerLocation[0] and self.playerLocation[0] <= m[3]:
