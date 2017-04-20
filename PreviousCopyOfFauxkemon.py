@@ -80,7 +80,8 @@ def game():
       #showInformation("Your pokemon are: " + inventory)
       show(getMedia("img", "starters"))
     else:
-      m.movePlayer(x)
+      if len(x)>0:
+        m.movePlayer(x)
       
       #if the player is at the boss's door and they move north, this will take them into the boss encounter.
       if (tuple(m.getPlayerLocation()) in boss) and ("n" in x.lower()):
@@ -134,13 +135,13 @@ def instructions():
 #starting information regarding the player's health, etc.
 def initUser():
   global userHealth
-  userHealth = 5
+  userHealth = 10
   global inventory
   inventory = ["Pakachu"]
   global fought
   #player's health will increase for each faux-kemon they have
-  for x in inventory:
-    userHealth += 5
+  global userHealth
+  userHealth = len(inventory) * 10
   #player's health will increase for each trainer they fought  
   #for x in fought:
     #userHealth += 3
@@ -154,6 +155,7 @@ def doctor1():
   text += "I have been working with my granddad for many years collecting faux-kemon for him to study. "
   text += "Enough of that though. You are here to get your faux-kemon! We have taken good care of it since "
   text += "you left it with us. Here you go!"
+  global inventory
   inventory.extend(["Voldetort", "Red Baron", "Branch Manager"])
   show(getMedia("img", "starters"))
   text += "You better be off to the forest to meet up with Gym Leader Block. She will be waiting for you!"
@@ -171,8 +173,10 @@ def doctor2():
 
 def battle(eName, eHealth):
   global userHealth
+  global inventory
   global fought
-
+  userHealth = len(inventory) * 10
+  
   enemyName = eName
   enemyHealth = eHealth
   round = 0
