@@ -80,7 +80,8 @@ def game():
       #showInformation("Your pokemon are: " + inventory)
       show(getMedia("img", "starters"))
     else:
-      m.movePlayer(x)
+      if len(x)>0:
+        m.movePlayer(x)
       
       #if the player is at the boss's door and they move north, this will take them into the boss encounter.
       if (tuple(m.getPlayerLocation()) in boss) and ("n" in x.lower()):
